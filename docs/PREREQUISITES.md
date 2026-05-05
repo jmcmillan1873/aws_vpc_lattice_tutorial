@@ -9,12 +9,15 @@ Everything you need before starting the tutorial.
 
 ## CLI Tools
 
+This tutorial is written for **AWS CloudShell**, which has the AWS CLI and Docker pre-installed. You'll need to install Terraform manually - see the [Lab Walkthrough Guide](WALKTHROUGH.md) for the exact commands.
+
+If you prefer to run the tutorial locally, you'll need:
+
 | Tool | Minimum Version | Purpose |
 |------|----------------|---------|
 | [Terraform](https://developer.hashicorp.com/terraform/downloads) | >= 1.14.0 | Infrastructure deployment |
 | [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) | v2 | AWS operations, ECR login, ECS run-task |
 | [Docker](https://docs.docker.com/get-docker/) | Latest stable | Build and push container images |
-| curl | Any | (Optional) Manual HTTP testing |
 
 ## Terraform Provider
 

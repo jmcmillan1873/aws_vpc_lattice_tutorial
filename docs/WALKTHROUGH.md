@@ -2,9 +2,34 @@
 
 This guide walks you through deploying, testing, and understanding the VPC Lattice service-to-service authentication tutorial.
 
-**Time**: 30–45 minutes | **Cost**: < $0.15 | **Prerequisites**: [PREREQUISITES.md](PREREQUISITES.md)
+**Time**: 30-45 minutes | **Cost**: < $0.15 | **Prerequisites**: [PREREQUISITES.md](PREREQUISITES.md)
 
 > Make sure you've read the [Important Notes](NOTICE.md) before deploying.
+
+---
+
+## Environment
+
+This tutorial is written for **AWS CloudShell**. It has the AWS CLI and Docker pre-installed, your credentials are automatically available, and there's nothing to configure before you start.
+
+To open CloudShell, click the terminal icon in the top navigation bar of the AWS Console, or go to [console.aws.amazon.com/cloudshell](https://console.aws.amazon.com/cloudshell). Make sure you open it in the same region you plan to deploy to.
+
+Terraform isn't pre-installed in CloudShell, so you'll need to add it. Run this once per CloudShell session:
+
+```bash
+sudo dnf install -y dnf-plugins-core
+sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+sudo dnf -y install terraform
+```
+
+CloudShell's home directory has limited disk space (1 GB), so redirect the Terraform plugin cache to `/tmp` before running any `terraform init`:
+
+```bash
+export TF_PLUGIN_CACHE_DIR="/tmp/tf-plugin-cache"
+mkdir -p $TF_PLUGIN_CACHE_DIR
+```
+
+> **Using a different environment?** The commands in this guide should work in any bash-compatible shell with the AWS CLI, Docker, and Terraform installed. You'll need to handle credential configuration and any environment differences yourself - but you probably already know that.
 
 ---
 
