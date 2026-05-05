@@ -151,5 +151,5 @@ resource "aws_iam_role" "ecs_infrastructure" {
 # in VPC Lattice target groups on behalf of the ECS service.
 resource "aws_iam_role_policy_attachment" "ecs_infrastructure_lattice" {
   role       = aws_iam_role.ecs_infrastructure.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSInfrastructureRolePolicyForVpcLattice"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonECSInfrastructureRolePolicyForVpcLattice"
 }
