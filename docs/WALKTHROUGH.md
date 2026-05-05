@@ -162,7 +162,7 @@ docker push $CALLER_ECR_URL:latest
 ### Phase 3: Deploy ECS Services and VPC Lattice
 
 ```bash
-cd ../phase3
+cd phase3
 terraform init
 
 terraform apply -auto-approve \
