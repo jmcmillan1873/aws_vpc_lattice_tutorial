@@ -287,44 +287,131 @@ aws iam delete-role-policy \
 
 ## How It Works
 
-### ECS Task Roles as Service Identity
+Now that you've seen the results, let's walk through exactly why Service_A succeeded and Service_C failed - using the AWS Console to inspect the real resources.
 
-Each ECS task assumes a unique IAM role at runtime. This role becomes the service's identity when making AWS API calls. The task role is automatically available inside the container via the container credential chain - no explicit credential management needed.
+### Step 1 - Understand service identity: look at the ECS task roles
 
-VPC Lattice uses this identity to evaluate authorization. The task role ARN is the principal that appears in both policy evaluations.
+Every ECS Fargate task assumes an IAM role at runtime. That role is the task's identity - it's what AWS uses to answer the question "who is making this request?"
 
-### The Dual Authorization Model
+Open the [IAM Console - Roles](https://console.aws.amazon.com/iam/home#/roles) and search for `lab-`. You'll see four roles:
+
+| Role | Purpose |
+|------|---------|
+| `lab-task-execution-role` | Used by the ECS agent to pull images and write logs - not the application |
+| `lab-service-a-task-role` | Assumed by Service_A's container at runtime |
+| `lab-service-b-task-role` | Assumed by Service_B's container at runtime |
+| `lab-service-c-task-role` | Assumed by Service_C's container at runtime |
+
+Click on `lab-service-a-task-role` and look at the **Permissions** tab. You'll see an inline policy that allows:
+
+```json
+{
+  "Effect": "Allow",
+  "Action": "vpc-lattice-svcs:Invoke",
+  "Resource": "*"
+}
+```
+
+Now click on `lab-service-c-task-role`. Notice the **Permissions** tab is empty - no policies attached. Service_C has no permission to invoke anything on VPC Lattice.
+
+This is the first gate. Service_A can attempt a VPC Lattice call; Service_C cannot.
+
+---
+
+### Step 2 - Understand the auth policy: look at the Lattice service
+
+Having the identity-based permission is necessary, but not sufficient. VPC Lattice also evaluates a resource-based auth policy on the target service itself.
+
+Open the [VPC Console](https://console.aws.amazon.com/vpcconsole/home) and click **Lattice services** in the left nav. Click on `lab-service-b`.
+
+On the service detail page, click the **Access** tab. You'll see the auth policy:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::<account_id>:role/lab-service-a-task-role"
+      },
+      "Action": "vpc-lattice-svcs:Invoke",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+This policy names exactly one principal: `lab-service-a-task-role`. Anyone not listed is implicitly denied. Service_C's role ARN does not appear here, so even if Service_C somehow passed the first gate, it would be blocked here.
+
+Also note the **Auth type** field at the top of the page is set to `AWS_IAM`. This is what activates policy enforcement - without it, the auth policy is ignored entirely.
+
+---
+
+### Step 3 - Trace why Service_A succeeds
+
+When Service_A makes a request to the Lattice service DNS endpoint, AWS evaluates two questions in sequence:
 
 ```mermaid
 graph TD
-    Request["Incoming Request<br/>(SigV4 signed)"]
-    Check1{"Identity-based policy<br/>allows Invoke?"}
-    Check2{"Lattice auth policy<br/>permits principal?"}
-    Allow["✓ Request forwarded<br/>to Service_B"]
-    Deny["✗ 403 AccessDeniedException<br/>(Service_B never sees it)"]
+    Request["Service_A sends SigV4-signed HTTP GET"]
+    Check1{"Does lab-service-a-task-role<br/>have vpc-lattice-svcs:Invoke?"}
+    Check2{"Does the Lattice auth policy<br/>permit lab-service-a-task-role?"}
+    Allow["Request forwarded to Service_B<br/>Service_B returns 200 OK"]
+    Deny["403 AccessDeniedException<br/>Service_B never sees the request"]
 
     Request --> Check1
-    Check1 -->|"Yes"| Check2
+    Check1 -->|"Yes - inline policy allows it"| Check2
     Check1 -->|"No"| Deny
-    Check2 -->|"Yes"| Allow
+    Check2 -->|"Yes - ARN is listed in auth policy"| Allow
     Check2 -->|"No"| Deny
 ```
 
-TWO independent policy evaluations must both allow:
+Both checks pass for Service_A. The request reaches Service_B, which returns its JSON response. Service_B has no idea who called it - it just handles the HTTP request.
 
-1. **Caller-side**: Does the caller's IAM role have `vpc-lattice-svcs:Invoke` permission?
-2. **Target-side**: Does the Lattice auth policy permit this specific principal?
+---
 
-If either denies, the request is blocked before reaching Service_B.
+### Step 4 - Trace why Service_C fails
 
-### SigV4 Signing
+Service_C uses identical application code to Service_A. The only difference is the IAM role it assumes. Follow the same flow:
 
-SigV4 signing proves the caller's identity to VPC Lattice:
+```mermaid
+graph TD
+    Request["Service_C sends SigV4-signed HTTP GET"]
+    Check1{"Does lab-service-c-task-role<br/>have vpc-lattice-svcs:Invoke?"}
+    Deny["403 AccessDeniedException<br/>Service_B never sees the request"]
 
-1. Credentials come from the ECS task role (automatic via container credential chain)
-2. Service name for signing: `vpc-lattice-svcs`
-3. VPC Lattice verifies the signature and extracts the caller's IAM principal ARN
-4. That ARN is evaluated against both authorization policies
+    Request --> Check1
+    Check1 -->|"No - no policies attached"| Deny
+```
+
+Service_C fails at the very first gate. It doesn't even reach the auth policy evaluation. The 403 comes back fast (under a second) because VPC Lattice rejects it immediately - there's no network timeout, no connection to Service_B, nothing.
+
+This is the key insight: **the application code is identical, the container image is identical, the network path is identical. The only thing that differs is the IAM role - and that's enough to completely control access.**
+
+---
+
+### Knowledge check
+
+You've seen Service_A succeed and Service_C fail. You understand why.
+
+**Challenge: can you update the solution to allow Service_C to connect to Service_B?**
+
+Think about what you'd need to change based on what you've just seen in the Console. There are two things that need to be true for a caller to succeed - you'll need to address both of them.
+
+Give it a go using the AWS Console before looking at any hints.
+
+> Stuck? A step-by-step console walkthrough is available in [docs/HINT-SERVICE-C.md](HINT-SERVICE-C.md).
+
+---
+
+### Why this matters: no application code changes needed
+
+Notice that Service_B's `app.py` contains zero authentication logic. It doesn't inspect headers, validate tokens, or check caller identity. It just returns a JSON response. Authorization is entirely handled by the infrastructure layer - VPC Lattice evaluates the policies before the request ever reaches the container.
+
+This is the core pattern: **define who can call what in IAM and Lattice policies, not in application code.**
+
+---
 
 ### Comparison to GCP Cloud Run IAM
 
