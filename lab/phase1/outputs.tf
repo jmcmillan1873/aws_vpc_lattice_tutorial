@@ -80,3 +80,10 @@ output "service_b_ecr_repository_url" {
   description = "ECR repository URL for the Service_B image"
   value       = aws_ecr_repository.service_b.repository_url
 }
+
+# Used by Phase 3 in the vpc_lattice_configuration block on the ECS service,
+# allowing ECS to register/deregister task IPs in the Lattice target group.
+output "ecs_infrastructure_role_arn" {
+  description = "ARN of the ECS infrastructure role for VPC Lattice target registration"
+  value       = aws_iam_role.ecs_infrastructure.arn
+}

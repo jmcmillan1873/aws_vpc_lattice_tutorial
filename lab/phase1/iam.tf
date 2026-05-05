@@ -4,6 +4,7 @@
 # This file creates the IAM roles used by ECS Fargate tasks:
 # - A shared Task Execution Role (for ECS agent operations: ECR pull, logs)
 # - Three Task Roles (one per service) providing unique service identity
+# - An ECS Infrastructure Role for VPC Lattice target registration
 #
 # The key teaching point: Service_A's task role has vpc-lattice-svcs:Invoke
 # permission, while Service_B and Service_C do not. Combined with the VPC
@@ -114,4 +115,41 @@ resource "aws_iam_role" "service_c_task" {
   tags = {
     Name = "${var.prefix}-service-c-task-role"
   }
+}
+
+# -----------------------------------------------------------------------------
+# ECS Infrastructure Role - VPC Lattice target registration
+# -----------------------------------------------------------------------------
+# ECS needs a dedicated infrastructure role to register and deregister task IPs
+# as targets in the VPC Lattice target group. This is separate from the task
+# execution role (which handles ECR pulls and logs) and the task roles (which
+# provide service identity). The AmazonECSInfrastructureRolePolicyForVpcLattice
+# managed policy grants the exact permissions ECS needs for this.
+
+data "aws_iam_policy_document" "ecs_infrastructure_assume_role" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ecs.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "ecs_infrastructure" {
+  name               = "${var.prefix}-ecs-infrastructure-role"
+  assume_role_policy = data.aws_iam_policy_document.ecs_infrastructure_assume_role.json
+
+  tags = {
+    Name = "${var.prefix}-ecs-infrastructure-role"
+  }
+}
+
+# AWS-managed policy that grants ECS permission to register/deregister targets
+# in VPC Lattice target groups on behalf of the ECS service.
+resource "aws_iam_role_policy_attachment" "ecs_infrastructure_lattice" {
+  role       = aws_iam_role.ecs_infrastructure.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSInfrastructureRolePolicyForVpcLattice"
 }

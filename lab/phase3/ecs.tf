@@ -97,6 +97,7 @@ resource "aws_ecs_task_definition" "service_b" {
       essential = true
       portMappings = [
         {
+          name          = "service-b-http"
           containerPort = 5000
           protocol      = "tcp"
         }
@@ -167,11 +168,13 @@ resource "aws_ecs_service" "service_b" {
     assign_public_ip = true
   }
 
-  # Associate with VPC Lattice target group for automatic target registration.
-  # The target group resource is defined in lattice.tf.
-  load_balancer {
+  # Native ECS + VPC Lattice integration. ECS uses the infrastructure role to
+  # automatically register and deregister task IPs in the Lattice target group
+  # as tasks start and stop. port_name must match the portMapping name in the
+  # task definition above.
+  vpc_lattice_configurations {
+    role_arn         = var.ecs_infrastructure_role_arn
     target_group_arn = aws_vpclattice_target_group.service_b.arn
-    container_name   = "service-b"
-    container_port   = 5000
+    port_name        = "service-b-http"
   }
 }

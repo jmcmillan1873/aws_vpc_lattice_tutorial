@@ -97,3 +97,10 @@ variable "service_b_image_uri" {
   description = "ECR image URI for the Service_B container (from Phase 2 docker push)"
   type        = string
 }
+
+# Used in the vpc_lattice_configuration block to allow ECS to register task IPs
+# as targets in the VPC Lattice target group automatically.
+variable "ecs_infrastructure_role_arn" {
+  description = "ECS infrastructure role ARN from Phase 1 (for VPC Lattice target registration)"
+  type        = string
+}

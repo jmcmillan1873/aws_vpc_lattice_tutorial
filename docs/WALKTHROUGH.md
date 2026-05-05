@@ -166,6 +166,7 @@ terraform apply -auto-approve \
   -var="service_a_task_role_arn=$(terraform -chdir=../phase1 output -raw service_a_task_role_arn)" \
   -var="service_b_task_role_arn=$(terraform -chdir=../phase1 output -raw service_b_task_role_arn)" \
   -var="service_c_task_role_arn=$(terraform -chdir=../phase1 output -raw service_c_task_role_arn)" \
+  -var="ecs_infrastructure_role_arn=$(terraform -chdir=../phase1 output -raw ecs_infrastructure_role_arn)" \
   -var="caller_image_uri=$CALLER_ECR_URL:latest" \
   -var="service_b_image_uri=$SERVICE_B_ECR_URL:latest"
 ```
@@ -361,6 +362,7 @@ terraform destroy -auto-approve \
   -var="service_a_task_role_arn=$(terraform -chdir=../phase1 output -raw service_a_task_role_arn)" \
   -var="service_b_task_role_arn=$(terraform -chdir=../phase1 output -raw service_b_task_role_arn)" \
   -var="service_c_task_role_arn=$(terraform -chdir=../phase1 output -raw service_c_task_role_arn)" \
+  -var="ecs_infrastructure_role_arn=$(terraform -chdir=../phase1 output -raw ecs_infrastructure_role_arn)" \
   -var="caller_image_uri=$CALLER_ECR_URL:latest" \
   -var="service_b_image_uri=$SERVICE_B_ECR_URL:latest"
 ```

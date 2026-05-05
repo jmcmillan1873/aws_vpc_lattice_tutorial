@@ -66,7 +66,7 @@ resource "aws_vpclattice_service_network_service_association" "service_b" {
 # -----------------------------------------------------------------------------
 # Type "IP" is required for VPC Lattice target groups. The ECS service
 # automatically registers and deregisters task IPs as targets when tasks
-# start or stop (via the load_balancer block in ecs.tf).
+# start or stop (via the vpc_lattice_configuration block in ecs.tf).
 # Health checks on "/" ensure only healthy tasks receive traffic.
 
 resource "aws_vpclattice_target_group" "service_b" {

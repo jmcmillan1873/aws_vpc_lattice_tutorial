@@ -14,6 +14,7 @@
 resource "aws_ecr_repository" "caller" {
   name                 = "${var.prefix}/caller"
   image_tag_mutability = "MUTABLE" # Allows re-pushing the same tag (e.g. "latest") during the lab
+  force_delete         = true      # Allows terraform destroy to remove the repo even if it contains images
 
   tags = {
     Name = "${var.prefix}-caller"
@@ -28,6 +29,7 @@ resource "aws_ecr_repository" "caller" {
 resource "aws_ecr_repository" "service_b" {
   name                 = "${var.prefix}/service-b"
   image_tag_mutability = "MUTABLE" # Allows re-pushing the same tag (e.g. "latest") during the lab
+  force_delete         = true      # Allows terraform destroy to remove the repo even if it contains images
 
   tags = {
     Name = "${var.prefix}-service-b"
