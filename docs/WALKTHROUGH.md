@@ -127,6 +127,14 @@ export ACCOUNT_ID=$(echo $CALLER_ECR_URL | cut -d'.' -f1)
 
 #### Authenticate Docker to ECR
 
+First, navigate back to the `lab/` directory:
+
+```bash
+cd ..
+```
+
+Then authenticate Docker to ECR:
+
 ```bash
 aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 ```
