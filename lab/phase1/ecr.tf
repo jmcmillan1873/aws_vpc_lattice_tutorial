@@ -9,7 +9,7 @@
 # ECR Repository: lab/caller
 # -----------------------------------------------------------------------------
 # Stores the caller image shared by both Service_A and Service_C.
-# Service_A and Service_C use identical application code — the difference
+# Service_A and Service_C use identical application code - the difference
 # between them is purely IAM (Task Role A vs Task Role C), not the image.
 resource "aws_ecr_repository" "caller" {
   name                 = "${var.prefix}/caller"

@@ -47,7 +47,7 @@ resource "aws_iam_role_policy_attachment" "task_execution_policy" {
 }
 
 # -----------------------------------------------------------------------------
-# Task Role A — Service_A (Authorised Caller)
+# Task Role A - Service_A (Authorised Caller)
 # -----------------------------------------------------------------------------
 # This role is assumed by Service_A's container at runtime.
 # It includes an identity-based policy allowing vpc-lattice-svcs:Invoke,
@@ -83,10 +83,10 @@ resource "aws_iam_role_policy" "service_a_lattice_invoke" {
 }
 
 # -----------------------------------------------------------------------------
-# Task Role B — Service_B (Protected Target)
+# Task Role B - Service_B (Protected Target)
 # -----------------------------------------------------------------------------
 # This role is assumed by Service_B's container at runtime.
-# Service_B does not call VPC Lattice — it only receives requests — so it
+# Service_B does not call VPC Lattice - it only receives requests - so it
 # needs no Lattice permissions. The role exists to give Service_B a unique
 # identity within the ECS task.
 
@@ -100,12 +100,12 @@ resource "aws_iam_role" "service_b_task" {
 }
 
 # -----------------------------------------------------------------------------
-# Task Role C — Service_C (Unauthorised Caller)
+# Task Role C - Service_C (Unauthorised Caller)
 # -----------------------------------------------------------------------------
 # This role is assumed by Service_C's container at runtime.
 # Service_C intentionally has NO vpc-lattice-svcs:Invoke permission.
 # This demonstrates that without the identity-based policy, the request
-# is denied — even before the Lattice auth policy is evaluated.
+# is denied - even before the Lattice auth policy is evaluated.
 
 resource "aws_iam_role" "service_c_task" {
   name               = "${var.prefix}-service-c-task-role"

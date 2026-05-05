@@ -11,7 +11,7 @@
 # -----------------------------------------------------------------------------
 
 variable "aws_region" {
-  description = "AWS region — must match the region used in Phase 1"
+  description = "AWS region - must match the region used in Phase 1"
   type        = string
   default     = "us-east-1"
 }
@@ -23,7 +23,7 @@ variable "prefix" {
 }
 
 # -----------------------------------------------------------------------------
-# Network — from Phase 1 outputs
+# Network - from Phase 1 outputs
 # -----------------------------------------------------------------------------
 
 # Used to associate the VPC with the Lattice Service Network
@@ -39,7 +39,7 @@ variable "subnet_id" {
 }
 
 # -----------------------------------------------------------------------------
-# Security Groups — from Phase 1 outputs
+# Security Groups - from Phase 1 outputs
 # -----------------------------------------------------------------------------
 
 # Attached to Service_A and Service_C tasks (egress-only, no inbound)
@@ -55,7 +55,7 @@ variable "service_b_security_group_id" {
 }
 
 # -----------------------------------------------------------------------------
-# IAM Roles — from Phase 1 outputs
+# IAM Roles - from Phase 1 outputs
 # -----------------------------------------------------------------------------
 
 # Shared execution role used by all task definitions for ECR pull and log writes
@@ -64,26 +64,26 @@ variable "task_execution_role_arn" {
   type        = string
 }
 
-# Task role for Service_A — has vpc-lattice-svcs:Invoke permission
+# Task role for Service_A - has vpc-lattice-svcs:Invoke permission
 variable "service_a_task_role_arn" {
   description = "Service_A task role ARN from Phase 1 (authorized to invoke Lattice)"
   type        = string
 }
 
-# Task role for Service_B — no Lattice permissions (it receives requests, doesn't make them)
+# Task role for Service_B - no Lattice permissions (it receives requests, doesn't make them)
 variable "service_b_task_role_arn" {
   description = "Service_B task role ARN from Phase 1 (no Lattice permissions)"
   type        = string
 }
 
-# Task role for Service_C — no Lattice permissions (demonstrates auth denial)
+# Task role for Service_C - no Lattice permissions (demonstrates auth denial)
 variable "service_c_task_role_arn" {
-  description = "Service_C task role ARN from Phase 1 (no Invoke permission — expects 403)"
+  description = "Service_C task role ARN from Phase 1 (no Invoke permission - expects 403)"
   type        = string
 }
 
 # -----------------------------------------------------------------------------
-# Container Image URIs — from Phase 2 (docker build + push)
+# Container Image URIs - from Phase 2 (docker build + push)
 # -----------------------------------------------------------------------------
 
 # Image used by both Service_A and Service_C task definitions (same code, different roles)

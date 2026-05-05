@@ -10,7 +10,7 @@
 #   2. This resource-based auth policy must also permit the caller's principal
 #
 # A request is forwarded to Service_B ONLY when both checks pass.
-# Any principal not explicitly listed here is implicitly denied — no explicit
+# Any principal not explicitly listed here is implicitly denied - no explicit
 # Deny statement is needed because the default evaluation is deny.
 #
 # In this lab:
@@ -25,7 +25,7 @@ resource "aws_vpclattice_auth_policy" "service_b" {
   resource_identifier = aws_vpclattice_service.service_b.arn
 
   # The policy permits ONLY Service_A's task role to invoke the service.
-  # All other principals receive an implicit deny — VPC Lattice will return
+  # All other principals receive an implicit deny - VPC Lattice will return
   # HTTP 403 AccessDeniedException before the request ever reaches Service_B.
   policy = jsonencode({
     Version = "2012-10-17"

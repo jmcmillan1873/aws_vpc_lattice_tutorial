@@ -1,5 +1,5 @@
 # =============================================================================
-# Phase 1: Base Infrastructure — Provider and VPC Resources
+# Phase 1: Base Infrastructure - Provider and VPC Resources
 # =============================================================================
 # This file configures the AWS provider and creates the foundational network
 # resources for the VPC Lattice service-to-service auth lab.
@@ -76,7 +76,7 @@ resource "aws_internet_gateway" "main" {
 # Route Table
 # -----------------------------------------------------------------------------
 # Routes all internet-bound traffic (0.0.0.0/0) through the Internet Gateway.
-# This makes the subnet "public" — tasks with public IPs can reach the internet.
+# This makes the subnet "public" - tasks with public IPs can reach the internet.
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 

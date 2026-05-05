@@ -13,7 +13,7 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# ECS Cluster — Fargate-only, no capacity providers needed
+# ECS Cluster - Fargate-only, no capacity providers needed
 # -----------------------------------------------------------------------------
 
 resource "aws_ecs_cluster" "main" {
@@ -21,7 +21,7 @@ resource "aws_ecs_cluster" "main" {
 }
 
 # -----------------------------------------------------------------------------
-# CloudWatch Log Groups — one per service for isolated log streams
+# CloudWatch Log Groups - one per service for isolated log streams
 # -----------------------------------------------------------------------------
 
 # Log group for Service_A (authorised caller) task output
@@ -43,7 +43,7 @@ resource "aws_cloudwatch_log_group" "service_c" {
 }
 
 # -----------------------------------------------------------------------------
-# Task Definition A — Authorised caller (uses caller image with Task Role A)
+# Task Definition A - Authorised caller (uses caller image with Task Role A)
 # -----------------------------------------------------------------------------
 # Service_A uses the shared caller image and Task Role A which has
 # vpc-lattice-svcs:Invoke permission. This task is run as a one-off via
@@ -53,8 +53,8 @@ resource "aws_ecs_task_definition" "service_a" {
   family                   = "service-a"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = "256" # 0.25 vCPU — smallest Fargate size
-  memory                   = "512" # 0.5 GB — smallest Fargate size
+  cpu                      = "256" # 0.25 vCPU - smallest Fargate size
+  memory                   = "512" # 0.5 GB - smallest Fargate size
   execution_role_arn       = var.task_execution_role_arn
   task_role_arn            = var.service_a_task_role_arn
 
@@ -76,7 +76,7 @@ resource "aws_ecs_task_definition" "service_a" {
 }
 
 # -----------------------------------------------------------------------------
-# Task Definition B — Protected target service (Flask app on port 5000)
+# Task Definition B - Protected target service (Flask app on port 5000)
 # -----------------------------------------------------------------------------
 # Service_B runs as a long-running ECS Service. It listens on port 5000 and
 # returns a JSON response. VPC Lattice routes traffic to it via the target group.
@@ -85,8 +85,8 @@ resource "aws_ecs_task_definition" "service_b" {
   family                   = "service-b"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = "256" # 0.25 vCPU — smallest Fargate size
-  memory                   = "512" # 0.5 GB — smallest Fargate size
+  cpu                      = "256" # 0.25 vCPU - smallest Fargate size
+  memory                   = "512" # 0.5 GB - smallest Fargate size
   execution_role_arn       = var.task_execution_role_arn
   task_role_arn            = var.service_b_task_role_arn
 
@@ -114,7 +114,7 @@ resource "aws_ecs_task_definition" "service_b" {
 }
 
 # -----------------------------------------------------------------------------
-# Task Definition C — Unauthorised caller (same caller image, Task Role C)
+# Task Definition C - Unauthorised caller (same caller image, Task Role C)
 # -----------------------------------------------------------------------------
 # Service_C uses the same caller image as Service_A but with Task Role C which
 # lacks vpc-lattice-svcs:Invoke permission. Demonstrates auth denial (403).
@@ -123,8 +123,8 @@ resource "aws_ecs_task_definition" "service_c" {
   family                   = "service-c"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = "256" # 0.25 vCPU — smallest Fargate size
-  memory                   = "512" # 0.5 GB — smallest Fargate size
+  cpu                      = "256" # 0.25 vCPU - smallest Fargate size
+  memory                   = "512" # 0.5 GB - smallest Fargate size
   execution_role_arn       = var.task_execution_role_arn
   task_role_arn            = var.service_c_task_role_arn
 
@@ -146,7 +146,7 @@ resource "aws_ecs_task_definition" "service_c" {
 }
 
 # -----------------------------------------------------------------------------
-# ECS Service for Service_B — long-running service fronted by VPC Lattice
+# ECS Service for Service_B - long-running service fronted by VPC Lattice
 # -----------------------------------------------------------------------------
 # Service_B must run continuously to receive requests routed through VPC Lattice.
 # The load_balancer block associates it with the Lattice target group so ECS
@@ -160,7 +160,7 @@ resource "aws_ecs_service" "service_b" {
   launch_type      = "FARGATE"
   platform_version = "LATEST"
 
-  # Network configuration — public IP for outbound connectivity (image pulls, logs)
+  # Network configuration - public IP for outbound connectivity (image pulls, logs)
   network_configuration {
     subnets          = [var.subnet_id]
     security_groups  = [var.service_b_security_group_id]

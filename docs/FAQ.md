@@ -1,12 +1,12 @@
 # FAQ & Troubleshooting
 
-Common questions and solutions for issues you might encounter during the lab.
+Common questions and solutions for issues you might encounter during the tutorial.
 
 ---
 
 ## Frequently Asked Questions
 
-### How long does the lab take?
+### How long does the tutorial take?
 
 30–45 minutes from start to finish, including deployment, testing, and cleanup.
 
@@ -16,7 +16,7 @@ Less than $0.15 for 1–2 hours. See [Cost Estimates](COST.md) for a full breakd
 
 ### Can I run this in an existing AWS account?
 
-Yes, but we recommend using a clean region or sandbox account. The lab creates its own VPC, IAM roles, and other resources that won't conflict with existing infrastructure — but a sandbox account eliminates any risk.
+Yes, but we recommend using a clean region or sandbox account. The tutorial creates its own VPC, IAM roles, and other resources that won't conflict with existing infrastructure - but a sandbox account eliminates any risk.
 
 ### Why do Service_A and Service_C use the same Docker image?
 
@@ -24,7 +24,7 @@ To reinforce the teaching point: authorization is purely infrastructure-level (I
 
 ### Why is there no NAT Gateway?
 
-Cost. A NAT Gateway costs ~$0.045/hour — more than all other lab resources combined. Public IPs on Fargate tasks provide the same outbound connectivity at zero additional cost. This is fine for a lab but not recommended for production. See [NOTICE.md](NOTICE.md) for details.
+Cost. A NAT Gateway costs ~$0.045/hour - more than all other tutorial resources combined. Public IPs on Fargate tasks provide the same outbound connectivity at zero additional cost. This is fine for a tutorial but not recommended for production. See [NOTICE.md](NOTICE.md) for details.
 
 ### Can I use a different region?
 
@@ -102,7 +102,7 @@ Both must allow for the request to succeed. This is the dual authorization model
 
 **Diagnosis approach:**
 
-1. Check response time and status code first — a fast 403 means the network is fine, the problem is authorization
+1. Check response time and status code first - a fast 403 means the network is fine, the problem is authorization
 2. If you see a timeout, investigate network: VPC association active? DNS resolving? Route table correct?
 3. If Service_A gets an unexpected 403, check the auth policy ARN matches the task role ARN exactly
 
@@ -116,4 +116,4 @@ If you've tried the troubleshooting steps above and are still having issues:
 2. Verify all Phase 1 outputs are being passed correctly to Phase 3
 3. Ensure the VPC Lattice service status is `ACTIVE`: `aws vpc-lattice get-service --service-identifier <id> --region $AWS_REGION`
 4. Check the target group has healthy targets: `aws vpc-lattice list-targets --target-group-identifier <id> --region $AWS_REGION`
-5. Try destroying everything and redeploying from scratch — it takes under 10 minutes
+5. Try destroying everything and redeploying from scratch - it takes under 10 minutes

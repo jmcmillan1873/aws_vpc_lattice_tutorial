@@ -1,14 +1,14 @@
 # Cost Estimates
 
-This lab is designed for minimal cost. All resources use the smallest available sizes and can be destroyed immediately after testing.
+This tutorial is designed for minimal cost. All resources use the smallest available sizes and can be destroyed immediately after testing.
 
 ## Lab Cost Breakdown (1–2 hours)
 
 | Resource | Configuration | Hourly Rate | Est. Cost (2 hours) |
 |----------|--------------|-------------|---------------------|
-| **ECS Fargate — Service_B** | 1 task × 0.25 vCPU × 0.5 GB (runs continuously) | ~$0.012/hr | ~$0.024 |
-| **ECS Fargate — Service_A** | 1 task × 0.25 vCPU × 0.5 GB (runs ~30 seconds) | ~$0.012/hr | < $0.01 |
-| **ECS Fargate — Service_C** | 1 task × 0.25 vCPU × 0.5 GB (runs ~30 seconds) | ~$0.012/hr | < $0.01 |
+| **ECS Fargate - Service_B** | 1 task × 0.25 vCPU × 0.5 GB (runs continuously) | ~$0.012/hr | ~$0.024 |
+| **ECS Fargate - Service_A** | 1 task × 0.25 vCPU × 0.5 GB (runs ~30 seconds) | ~$0.012/hr | < $0.01 |
+| **ECS Fargate - Service_C** | 1 task × 0.25 vCPU × 0.5 GB (runs ~30 seconds) | ~$0.012/hr | < $0.01 |
 | **VPC Lattice service** | 1 service (hourly charge) | ~$0.025/hr | ~$0.05 |
 | **VPC Lattice data processing** | Minimal bytes for lab traffic | $0.025/GB | < $0.01 |
 | **ECR storage** | 2 small images (~100 MB total) | $0.10/GB/month | < $0.01 |
@@ -19,9 +19,9 @@ This lab is designed for minimal cost. All resources use the smallest available 
 
 ## Why Public Subnets?
 
-This lab uses **public subnets with auto-assigned public IPs** purely to minimise cost in a learning environment. This avoids:
+This tutorial uses **public subnets with auto-assigned public IPs** purely to minimise cost in a learning environment. This avoids:
 
-- **NAT Gateway**: ~$0.045/hour + $0.045/GB data processing — would cost more than all other lab resources combined
+- **NAT Gateway**: ~$0.045/hour + $0.045/GB data processing - would cost more than all other lab resources combined
 - **VPC endpoints for ECR/CloudWatch**: ~$0.01/hour per endpoint × multiple endpoints needed
 
 For production workloads, you would typically use **private subnets** with either:
@@ -71,7 +71,7 @@ If you were to evolve this pattern into a production service mesh, here are the 
 
 1. **Right-size early**: Monitor CPU and memory utilisation for 2 weeks before committing to task sizes
 2. **Use Savings Plans**: For steady-state workloads, compute savings plans provide significant discounts
-3. **Consolidate Lattice services**: Each service incurs an hourly charge — group related endpoints where it makes architectural sense
+3. **Consolidate Lattice services**: Each service incurs an hourly charge - group related endpoints where it makes architectural sense
 4. **Set log retention**: Default CloudWatch retention is indefinite; set 7–30 day retention for operational logs
 5. **Monitor data transfer**: Cross-AZ and internet-bound data transfer adds up quickly at scale
 6. **Consider Fargate Spot**: For batch jobs, background processing, or services with retry logic

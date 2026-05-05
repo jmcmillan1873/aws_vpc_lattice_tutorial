@@ -1,6 +1,6 @@
-# Lab Walkthrough
+# Lab Walkthrough Guide
 
-This guide walks you through deploying, testing, and understanding the VPC Lattice service-to-service authentication lab.
+This guide walks you through deploying, testing, and understanding the VPC Lattice service-to-service authentication tutorial.
 
 **Time**: 30–45 minutes | **Cost**: < $0.15 | **Prerequisites**: [PREREQUISITES.md](PREREQUISITES.md)
 
@@ -141,7 +141,7 @@ docker push $SERVICE_B_ECR_URL:latest
 
 #### Build and push the caller image
 
-This image is shared by both Service_A and Service_C — the difference is purely IAM.
+This image is shared by both Service_A and Service_C - the difference is purely IAM.
 
 ```bash
 docker build -t lab/caller ./services/caller/
@@ -249,7 +249,7 @@ Response body: AccessDeniedException
 
 ### Optional Experiment: Dual Authorization Proof
 
-This proves that the identity-based IAM policy alone is insufficient — the Lattice auth policy must also permit the caller.
+This proves that the identity-based IAM policy alone is insufficient - the Lattice auth policy must also permit the caller.
 
 **Step 1**: Grant Service_C the Invoke permission:
 
@@ -263,7 +263,7 @@ aws iam put-role-policy \
 
 **Step 2**: Re-run Service_C (same command as Test 2 above).
 
-**Expected**: Still `403 AccessDeniedException` — because the Lattice auth policy only permits Service_A's role.
+**Expected**: Still `403 AccessDeniedException` - because the Lattice auth policy only permits Service_A's role.
 
 **Step 3**: Clean up:
 
@@ -280,7 +280,7 @@ aws iam delete-role-policy \
 
 ### ECS Task Roles as Service Identity
 
-Each ECS task assumes a unique IAM role at runtime. This role becomes the service's identity when making AWS API calls. The task role is automatically available inside the container via the container credential chain — no explicit credential management needed.
+Each ECS task assumes a unique IAM role at runtime. This role becomes the service's identity when making AWS API calls. The task role is automatically available inside the container via the container credential chain - no explicit credential management needed.
 
 VPC Lattice uses this identity to evaluate authorization. The task role ARN is the principal that appears in both policy evaluations.
 

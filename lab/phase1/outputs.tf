@@ -61,7 +61,7 @@ output "service_b_task_role_arn" {
 
 # Used by Phase 3 in Service_C task definition
 output "service_c_task_role_arn" {
-  description = "ARN of Service_C task role (no Lattice permissions — demonstrates denial)"
+  description = "ARN of Service_C task role (no Lattice permissions - demonstrates denial)"
   value       = aws_iam_role.service_c_task.arn
 }
 

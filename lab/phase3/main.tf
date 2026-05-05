@@ -1,5 +1,5 @@
 # =============================================================================
-# Phase 3: ECS Services and VPC Lattice — Provider Configuration
+# Phase 3: ECS Services and VPC Lattice - Provider Configuration
 # =============================================================================
 # This file configures the AWS provider for Phase 3. Phase 3 deploys ECS task
 # definitions, the Service_B ECS service, and all VPC Lattice resources

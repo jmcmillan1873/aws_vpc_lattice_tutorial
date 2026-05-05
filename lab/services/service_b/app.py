@@ -1,6 +1,6 @@
 """Service_B: A simple Flask app fronted by VPC Lattice.
 
-This service does NOT inspect or enforce caller identity —
+This service does NOT inspect or enforce caller identity -
 VPC Lattice handles auth before requests reach this container.
 """
 

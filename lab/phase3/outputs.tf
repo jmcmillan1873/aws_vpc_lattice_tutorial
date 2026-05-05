@@ -7,7 +7,7 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# VPC Lattice Service DNS — used as LATTICE_ENDPOINT in container overrides
+# VPC Lattice Service DNS - used as LATTICE_ENDPOINT in container overrides
 # -----------------------------------------------------------------------------
 # This is the DNS name that caller tasks (Service_A, Service_C) use as the
 # target URL for their SigV4-signed HTTP requests. Passed via run-task
@@ -19,7 +19,7 @@ output "lattice_service_dns" {
 }
 
 # -----------------------------------------------------------------------------
-# ECS Cluster Name — used in aws ecs run-task --cluster argument
+# ECS Cluster Name - used in aws ecs run-task --cluster argument
 # -----------------------------------------------------------------------------
 
 output "ecs_cluster_name" {
@@ -28,23 +28,23 @@ output "ecs_cluster_name" {
 }
 
 # -----------------------------------------------------------------------------
-# Task Definition ARNs — used in aws ecs run-task --task-definition argument
+# Task Definition ARNs - used in aws ecs run-task --task-definition argument
 # -----------------------------------------------------------------------------
 
-# Task definition for Service_A (authorised caller — expects 200 response)
+# Task definition for Service_A (authorised caller - expects 200 response)
 output "service_a_task_definition_arn" {
   description = "Task definition ARN for Service_A (authorised caller)"
   value       = aws_ecs_task_definition.service_a.arn
 }
 
-# Task definition for Service_C (unauthorised caller — expects 403 response)
+# Task definition for Service_C (unauthorised caller - expects 403 response)
 output "service_c_task_definition_arn" {
   description = "Task definition ARN for Service_C (unauthorised caller)"
   value       = aws_ecs_task_definition.service_c.arn
 }
 
 # -----------------------------------------------------------------------------
-# Network Configuration — used in run-task --network-configuration argument
+# Network Configuration - used in run-task --network-configuration argument
 # -----------------------------------------------------------------------------
 
 # Subnet for awsvpcConfiguration in run-task commands

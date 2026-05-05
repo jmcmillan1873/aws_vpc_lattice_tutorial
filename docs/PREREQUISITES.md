@@ -1,11 +1,11 @@
 # Prerequisites
 
-Everything you need before starting the lab.
+Everything you need before starting the tutorial.
 
 ## AWS Account
 
 - A **clean AWS account or region** with no pre-existing VPC Lattice resources, ECS clusters, or conflicting IAM roles
-- No dependency on pre-existing resources — the lab deploys everything from scratch
+- No dependency on pre-existing resources - the tutorial deploys everything from scratch
 
 ## CLI Tools
 
@@ -55,4 +55,4 @@ The IAM user or role running Terraform and AWS CLI commands needs the following 
 | **Time to complete** | 30–45 minutes |
 | **Estimated cost** | < $0.15 for 1–2 hours |
 
-> Run the Cleanup section promptly after completing the lab to avoid ongoing charges. See [Cost Estimates](COST.md) for a full breakdown.
+> Run the Cleanup section promptly after completing the tutorial to avoid ongoing charges. See [Cost Estimates](COST.md) for a full breakdown.

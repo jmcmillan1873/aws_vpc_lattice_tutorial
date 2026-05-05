@@ -14,7 +14,7 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Service Network — logical grouping of Lattice services
+# Service Network - logical grouping of Lattice services
 # -----------------------------------------------------------------------------
 # The service network acts as a boundary within which services can discover
 # and communicate with each other. VPCs must be associated with the network
@@ -25,7 +25,7 @@ resource "aws_vpclattice_service_network" "main" {
 }
 
 # -----------------------------------------------------------------------------
-# VPC Association — connects our VPC to the Service Network
+# VPC Association - connects our VPC to the Service Network
 # -----------------------------------------------------------------------------
 # This association allows ECS tasks running in the VPC to route traffic to
 # Lattice services within the service network. Without this, tasks cannot
@@ -37,7 +37,7 @@ resource "aws_vpclattice_service_network_vpc_association" "main" {
 }
 
 # -----------------------------------------------------------------------------
-# Lattice Service — fronts Service_B with IAM authorization
+# Lattice Service - fronts Service_B with IAM authorization
 # -----------------------------------------------------------------------------
 # The Lattice service is the entry point for callers wanting to reach Service_B.
 # Setting auth_type to AWS_IAM means every request must be SigV4-signed and
@@ -62,7 +62,7 @@ resource "aws_vpclattice_service_network_service_association" "service_b" {
 }
 
 # -----------------------------------------------------------------------------
-# Target Group — routes traffic to Service_B task IPs on port 5000
+# Target Group - routes traffic to Service_B task IPs on port 5000
 # -----------------------------------------------------------------------------
 # Type "IP" is required for VPC Lattice target groups. The ECS service
 # automatically registers and deregisters task IPs as targets when tasks
@@ -91,7 +91,7 @@ resource "aws_vpclattice_target_group" "service_b" {
 }
 
 # -----------------------------------------------------------------------------
-# HTTP Listener — accepts requests on port 80 and forwards to target group
+# HTTP Listener - accepts requests on port 80 and forwards to target group
 # -----------------------------------------------------------------------------
 # The listener defines how the Lattice service receives inbound requests.
 # All traffic on port 80 is forwarded to the Service_B target group.

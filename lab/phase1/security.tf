@@ -2,8 +2,8 @@
 # Phase 1: Security Groups
 # =============================================================================
 # Two security groups control network access for ECS tasks:
-#   1. "callers" — used by Service_A and Service_C (outbound only)
-#   2. "service-b" — used by Service_B (inbound from VPC Lattice on port 5000)
+#   1. "callers" - used by Service_A and Service_C (outbound only)
+#   2. "service-b" - used by Service_B (inbound from VPC Lattice on port 5000)
 #
 # No security group permits inbound traffic from 0.0.0.0/0.
 # =============================================================================
@@ -24,7 +24,7 @@ data "aws_ec2_managed_prefix_list" "vpc_lattice" {
 # -----------------------------------------------------------------------------
 # Allows all outbound traffic (needed for SigV4-signed requests to Lattice,
 # image pulls from ECR, and log delivery to CloudWatch).
-# No inbound rules — callers do not receive any incoming connections.
+# No inbound rules - callers do not receive any incoming connections.
 resource "aws_security_group" "callers" {
   name        = "${var.prefix}-callers-sg"
   description = "Security group for caller tasks (Service_A, Service_C) - egress only"
@@ -39,7 +39,7 @@ resource "aws_security_group" "callers" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # No ingress rules — callers never receive inbound connections
+  # No ingress rules - callers never receive inbound connections
 
   tags = {
     Name = "${var.prefix}-callers-sg"
@@ -55,7 +55,7 @@ resource "aws_security_group" "callers" {
 # Why the prefix list? VPC Lattice forwards requests to targets from its own
 # managed IP range. By referencing the prefix list rather than a CIDR, we
 # ensure the rule stays correct even if AWS updates the Lattice IP ranges.
-# This is the ONLY inbound rule in the entire lab — no 0.0.0.0/0 ingress.
+# This is the ONLY inbound rule in the entire lab - no 0.0.0.0/0 ingress.
 resource "aws_security_group" "service_b" {
   name        = "${var.prefix}-service-b-sg"
   description = "Security group for Service_B - allows inbound from VPC Lattice only"
