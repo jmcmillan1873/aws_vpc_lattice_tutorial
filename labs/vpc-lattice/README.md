@@ -416,17 +416,109 @@ This is the key insight: **the application code is identical, the container imag
 
 ---
 
-### Knowledge check
+### Knowledge Check
 
 You've seen Service_A succeed and Service_C fail. You understand why.
 
 **Challenge: can you update the solution to allow Service_C to connect to Service_B?**
 
-Think about what you'd need to change based on what you've just seen in the Console. There are two things that need to be true for a caller to succeed - you'll need to address both of them.
+Think about what you'd need to change based on what you've just seen in the Console. There are two things that need to be true for a caller to succeed — you'll need to address both of them.
 
-Give it a go using the AWS Console before looking at any hints.
+Give it a go using the AWS Console before looking at the hint below.
 
-> Stuck? A step-by-step console walkthrough is available in [HINT.md](HINT.md).
+<details>
+<summary><strong>Hint</strong></summary>
+
+Recall the two gates a caller must pass:
+
+1. The caller's IAM role must have `vpc-lattice-svcs:Invoke` permission
+2. The VPC Lattice auth policy on the target service must permit the caller's principal
+
+Service_C currently fails at gate 1. Even if you fix that, it will then fail at gate 2. You need to fix both.
+
+#### Step 1 — Add the identity-based policy to Service_C's role
+
+1. Open the [IAM Console - Roles](https://console.aws.amazon.com/iam/home#/roles) and search for `lab-service-c-task-role`
+2. Click on the role, then click the **Permissions** tab
+3. Click **Add permissions** → **Create inline policy**
+4. Switch to the **JSON** editor and paste:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "vpc-lattice-svcs:Invoke",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+5. Click **Next**, name the policy (e.g. `lattice-invoke`), then click **Create policy**
+
+Service_C can now attempt VPC Lattice calls — but it will still get a 403 because gate 2 is still blocking it.
+
+#### Step 2 — Update the Lattice auth policy to permit Service_C
+
+1. Open the [VPC Console](https://console.aws.amazon.com/vpcconsole/home) and click **Lattice services** in the left nav
+2. Click on `lab-service-b`, then click the **Access** tab
+3. Click **Edit** on the auth policy
+4. Add Service_C's role ARN as a second principal:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": [
+          "arn:aws:iam::<account_id>:role/lab-service-a-task-role",
+          "arn:aws:iam::<account_id>:role/lab-service-c-task-role"
+        ]
+      },
+      "Action": "vpc-lattice-svcs:Invoke",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+Replace `<account_id>` with your AWS account ID (visible in the top-right of the console, or via `aws sts get-caller-identity --query Account --output text`).
+
+5. Click **Save**
+
+#### Step 3 — Re-run Service_C and verify
+
+Run Service_C again using the same `aws ecs run-task` command from the testing section, then check the logs:
+
+```bash
+aws logs tail /ecs/service-c --since 5m --region $AWS_REGION
+```
+
+**Expected output:**
+
+```
+Response status: 200
+Response body: {"message": "Hello from Service_B!", "timestamp": "..."}
+```
+
+#### What you've demonstrated
+
+By making two changes — one to IAM, one to the Lattice auth policy — you've granted Service_C access to Service_B. Neither change touched any application code. Service_B's `app.py` is completely unchanged.
+
+This is the pattern in practice: access control is managed entirely through IAM and Lattice policies, not through application logic.
+
+#### Tidy up
+
+To restore the original lab state (Service_C denied), reverse both changes:
+
+1. In IAM, delete the inline policy you added to `lab-service-c-task-role`
+2. In VPC Lattice, edit the auth policy back to only permit `lab-service-a-task-role`
+
+</details>
 
 ---
 
