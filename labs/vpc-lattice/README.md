@@ -1,10 +1,10 @@
-# Lab Walkthrough Guide
+# VPC Lattice Service-to-Service Authentication Lab
 
-This guide walks you through deploying, testing, and understanding the VPC Lattice service-to-service authentication tutorial.
+This lab teaches **infrastructure-enforced service-to-service authentication** using VPC Lattice and IAM on AWS. You'll deploy a minimal environment from scratch and observe both successful and blocked inter-service communication — proving that authorization is enforced at the infrastructure level, not in application code.
 
-**Time**: 30-45 minutes | **Cost**: < $0.15 | **Prerequisites**: [PREREQUISITES.md](PREREQUISITES.md)
+**Time**: 30–45 minutes | **Cost**: < $0.15 | **Prerequisites**: [Prerequisites](../../docs/PREREQUISITES.md)
 
-> Make sure you've read the [Important Notes](NOTICE.md) before deploying.
+> Make sure you've read the [Important Notes](../../docs/NOTICE.md) before deploying.
 
 ---
 
@@ -120,7 +120,7 @@ graph LR
 Phase 1 creates the VPC, subnet, IAM roles, ECR repositories, and security groups.
 
 ```bash
-cd lab/phase1
+cd labs/vpc-lattice/phase1
 terraform init
 terraform plan
 terraform apply -auto-approve
@@ -426,7 +426,7 @@ Think about what you'd need to change based on what you've just seen in the Cons
 
 Give it a go using the AWS Console before looking at any hints.
 
-> Stuck? A step-by-step console walkthrough is available in [docs/HINT-SERVICE-C.md](HINT-SERVICE-C.md).
+> Stuck? A step-by-step console walkthrough is available in [HINT.md](HINT.md).
 
 ---
 
@@ -471,7 +471,7 @@ Destroy all resources promptly to avoid ongoing charges.
 ### Step 1: Destroy Phase 3
 
 ```bash
-cd lab/phase3
+cd labs/vpc-lattice/phase3
 
 terraform destroy -auto-approve \
   -var="vpc_id=$(terraform -chdir=../phase1 output -raw vpc_id)" \

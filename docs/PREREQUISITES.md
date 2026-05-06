@@ -9,7 +9,7 @@ Everything you need before starting the tutorial.
 
 ## CLI Tools
 
-This tutorial is written for **AWS CloudShell**, which has the AWS CLI and Docker pre-installed. You'll need to install Terraform manually - see the [Lab Walkthrough Guide](WALKTHROUGH.md) for the exact commands.
+This tutorial is written for **AWS CloudShell**, which has the AWS CLI and Docker pre-installed. You'll need to install Terraform manually - see the individual lab READMEs for the exact commands.
 
 If you prefer to run the tutorial locally, you'll need:
 
