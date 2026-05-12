@@ -37,7 +37,7 @@
 ## Task 6: Create tutorial README with deployment steps and comparison section
 
 - [x] 6.1 Create `lab-jwt/README.md` with overview, prerequisites, and phased deployment instructions (terraform init/plan/apply, docker build/push, run-task commands)
-- [~] 6.2 Add testing section showing expected Service_A (200) and Service_C (403) outcomes with log viewing commands
-- [~] 6.3 Add comparison section: VPC Lattice vs JWT auth concept alignment table, trade-off dimensions (portability, cost, complexity, security boundary, failure modes), and TLS security note
-- [~] 6.4 Add optional extension section describing Token_Issuer service pattern
-- [~] 6.5 Add cleanup section with terraform destroy commands and cost estimate
+- [x] 6.2 Add testing section showing expected Service_A (200) and Service_C (403) outcomes with log viewing commands
+- [x] 6.3 Add comparison section: VPC Lattice vs JWT auth concept alignment table, trade-off dimensions (portability, cost, complexity, security boundary, failure modes), and TLS security note
+- [x] 6.4 Add optional extension section describing Token_Issuer service pattern
+- [x] 6.5 Add cleanup section with terraform destroy commands and cost estimate

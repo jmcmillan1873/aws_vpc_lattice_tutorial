@@ -418,3 +418,183 @@ If you see `NETWORK ERROR: Connection timed out` or `NETWORK ERROR: Connection r
 
 Auth responses always show `AUTH SUCCESS` or `AUTH DENIED` with an HTTP status code. Network errors always show `NETWORK ERROR` with a connection-level message.
 
+---
+
+## Comparison: VPC Lattice vs JWT Auth
+
+Both labs produce the same observable outcome — Service_A gets through, Service_C is blocked — but they enforce access control at fundamentally different layers.
+
+### Concept Alignment
+
+| Concept | VPC Lattice Lab | JWT Lab |
+|---------|----------------|---------|
+| **Identity** | IAM Role ARN attached to ECS task | JWT `sub` claim (e.g. `service-a`) |
+| **Credential** | AWS SigV4 signature (automatic) | JWT Bearer token (generated in code) |
+| **Enforcement point** | VPC Lattice service network (before request reaches app) | Token validation middleware (inside the application) |
+| **Auth decision** | IAM identity policy + Lattice resource-based auth policy | Signature verification + subject allowlist check |
+| **Policy language** | JSON IAM policy document | Environment variable (`ALLOWED_SUBJECTS`) |
+| **Deny behaviour** | HTTP 403 from Lattice (app never sees the request) | HTTP 403 from Flask (app processes and rejects) |
+
+### Trade-off Dimensions
+
+| Dimension | VPC Lattice | JWT (Application-Layer) |
+|-----------|-------------|------------------------|
+| **Portability** | AWS-only (tied to IAM + Lattice) | Any environment — cloud, on-prem, local dev |
+| **Application code changes** | None — auth is invisible to the app | Every service must implement token validation |
+| **Key management** | Delegated to IAM (no keys to manage) | You own rotation, distribution, and revocation |
+| **Security boundary** | Network layer — requests are blocked before reaching the container | Application layer — malformed requests still hit your code |
+| **Cost** | ~$0.025/hr per Lattice service + $0.025/GB data processing | No direct auth cost (compute only) |
+| **Failure modes** | IAM propagation delay; Lattice service health | Token expiry clock skew; secret rotation gaps; validation bugs |
+| **Observability** | Lattice access logs (automatic) | Application logs (you build it) |
+| **Blast radius of a bug** | Auth policy misconfiguration exposes the service | Validation code bug exposes the service |
+
+### The Key Insight
+
+Both approaches implement **identity-based access control**. The difference is where the gate sits:
+
+- **VPC Lattice**: the gate is in the infrastructure. Your application never sees denied requests. You can't accidentally bypass it with a code change.
+- **JWT**: the gate is in your code. It's portable and flexible, but every service must implement it correctly, and a bug in validation logic means the gate is open.
+
+Neither is universally better. VPC Lattice is stronger when you want infrastructure-level guarantees and are committed to AWS. JWT is stronger when you need portability, multi-cloud support, or fine-grained claims-based authorization that goes beyond identity.
+
+### TLS Security Note
+
+> ⚠️ **This lab transmits JWTs over plain HTTP.** This is acceptable only because all traffic stays within a single VPC on a private network.
+>
+> In production, JWTs MUST be transmitted over HTTPS (TLS). Without TLS, any network observer can intercept a token and replay it to impersonate the caller. VPC Lattice avoids this concern entirely — it handles TLS termination and SigV4 verification at the infrastructure layer.
+>
+> This lab intentionally omits TLS to keep the focus on the auth pattern. Do not replicate this in any environment where traffic crosses a network boundary.
+
+---
+
+## Optional Extension: Token Issuer Service
+
+The baseline lab has a deliberate simplification: every service holds the signing key and mints its own tokens. This is fine for demonstrating the validation pattern, but it means any service can impersonate any other service — there's no central authority controlling identity.
+
+This section describes how you'd evolve the pattern toward production-realistic token issuance without introducing a real identity provider.
+
+### The Pattern
+
+```mermaid
+graph LR
+    TI["Token_Issuer<br/>(owns signing key)"]
+    A["Service_A"]
+    B["Service_B"]
+    C["Service_C"]
+
+    A -->|"POST /token<br/>client_id=service-a"| TI
+    TI -->|"JWT (sub=service-a)"| A
+    A -->|"Bearer JWT → 200"| B
+
+    C -->|"POST /token<br/>client_id=service-c"| TI
+    TI -->|"JWT (sub=service-c)"| C
+    C -->|"Bearer JWT → 403"| B
+```
+
+**What changes:**
+- A new `Token_Issuer` service holds the signing key exclusively
+- Service_A and Service_C request tokens from Token_Issuer instead of generating their own
+- Service_B still validates tokens the same way (no change to the validation logic)
+- Callers no longer hold the signing key — they can't forge tokens
+
+**What stays the same:**
+- Service_B's validation pipeline is identical
+- The observable outcome is unchanged (Service_A: 200, Service_C: 403)
+- The authorization decision is still based on the `sub` claim
+
+### Why This Is More Realistic
+
+In the baseline lab, the shared signing key means trust is implicit — any service that has the key can claim any identity. With a Token Issuer:
+
+- **Identity is issued, not self-asserted** — callers prove who they are to the issuer, and the issuer vouches for them
+- **The signing key has a single owner** — compromise of one caller doesn't compromise the signing key
+- **Authorization and authentication are cleanly separated** — the issuer handles "who are you?", Service_B handles "are you allowed?"
+
+### How This Maps to Real-World Systems
+
+| Lab Concept | Production Equivalent |
+|-------------|----------------------|
+| Token_Issuer service | AWS Cognito, Auth0, Keycloak, Google Workload Identity |
+| `POST /token` endpoint | OAuth 2.0 client credentials grant |
+| Shared HMAC key | RSA/ECDSA key pair (issuer holds private key, services hold public key or JWKS URL) |
+| Hardcoded `sub` claim | Identity derived from mTLS certificate, instance metadata, or service account |
+
+### What's Still Simplified
+
+Even with a Token Issuer, this lab omits production concerns:
+
+- **No trust chain** — the issuer's identity isn't verified by a certificate authority
+- **No key rotation** — the signing key is static for the lab's lifetime
+- **No token exchange** — services can't delegate identity to downstream calls
+- **No token revocation** — issued tokens are valid until they expire
+- **No JWKS endpoint** — Service_B uses a shared secret rather than fetching public keys
+
+These are all solvable problems, but each adds complexity that would obscure the core pattern this lab teaches.
+
+### Implementation Sketch
+
+If you want to build this extension yourself, here's the approach:
+
+1. Create `labs/jwt/services/token_issuer/app.py` — a Flask app (~30 lines) with a `POST /token` endpoint that accepts a `client_id` parameter and returns a signed JWT
+2. Add a Token_Issuer task definition to Phase 3 with the `JWT_SECRET` env var
+3. Remove `JWT_SECRET` from the caller task definitions
+4. Add a `TOKEN_ISSUER_URL` env var to the caller task definitions
+5. Update `caller.py` to request a token from Token_Issuer before calling Service_B
+
+The Token_Issuer doesn't need to authenticate callers (that would require another auth mechanism — turtles all the way down). It simply maps `client_id` to a `sub` claim. The point is demonstrating centralised issuance, not building a secure IdP.
+
+---
+
+## Cleanup
+
+Destroy resources in reverse order to avoid dependency errors.
+
+### Tear down Phase 3 (ECS services)
+
+```bash
+cd labs/jwt/phase3
+
+terraform destroy -auto-approve \
+  -var="subnet_id=$(terraform -chdir=../phase1 output -raw subnet_id)" \
+  -var="callers_security_group_id=$(terraform -chdir=../phase1 output -raw callers_security_group_id)" \
+  -var="service_b_security_group_id=$(terraform -chdir=../phase1 output -raw service_b_security_group_id)" \
+  -var="task_execution_role_arn=$(terraform -chdir=../phase1 output -raw task_execution_role_arn)" \
+  -var="service_a_task_role_arn=$(terraform -chdir=../phase1 output -raw service_a_task_role_arn)" \
+  -var="service_b_task_role_arn=$(terraform -chdir=../phase1 output -raw service_b_task_role_arn)" \
+  -var="service_c_task_role_arn=$(terraform -chdir=../phase1 output -raw service_c_task_role_arn)" \
+  -var="caller_image_uri=$CALLER_ECR_URL:latest" \
+  -var="service_b_image_uri=$SERVICE_B_ECR_URL:latest" \
+  -var="jwt_secret=my-super-secret-key-for-lab"
+```
+
+### Tear down Phase 1 (base infrastructure)
+
+```bash
+cd ../phase1
+terraform destroy -auto-approve
+```
+
+### Verify cleanup
+
+Confirm no resources remain:
+
+```bash
+aws ecs list-clusters --region $AWS_REGION | grep jwt-lab
+aws ec2 describe-vpcs --filters "Name=tag:Name,Values=*jwt-lab*" --region $AWS_REGION --query 'Vpcs[].VpcId'
+```
+
+Both commands should return empty results.
+
+### Cost Estimate
+
+| Resource | Configuration | Est. Cost (2 hours) |
+|----------|--------------|---------------------|
+| ECS Fargate — Service_B | 1 task × 0.25 vCPU × 0.5 GB (runs continuously) | ~$0.024 |
+| ECS Fargate — Service_A | 1 task × 0.25 vCPU × 0.5 GB (runs ~30 seconds) | < $0.01 |
+| ECS Fargate — Service_C | 1 task × 0.25 vCPU × 0.5 GB (runs ~30 seconds) | < $0.01 |
+| ECR storage | 2 small images (~100 MB total) | < $0.01 |
+| CloudWatch Logs | Minimal log volume | < $0.01 |
+| **Total** | | **< $0.10** |
+
+Compared to the VPC Lattice lab (~$0.15 for 2 hours), the JWT lab is slightly cheaper because there are no VPC Lattice per-hour or data-processing charges. The only costs are Fargate compute and minimal storage.
+
