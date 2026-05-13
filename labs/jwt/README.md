@@ -157,20 +157,17 @@ aws ecs list-tasks --cluster jwt-lab-cluster --service-name service-b --region $
 
 #### Get Service_B's IP address
 
-Service_B runs as a Fargate task with a public IP. You need this IP to tell callers where to send requests.
+Service_B runs as a Fargate task in the same subnet as the callers. You need its **private IP** to tell callers where to send requests.
+
+> **Why private IP?** The security group allows inbound traffic from the callers security group. SG-to-SG rules only match when traffic uses private IPs within the VPC. Traffic via public IPs appears to come from outside the SG, so it won't match the inbound rule.
 
 ```bash
 TASK_ARN=$(aws ecs list-tasks --cluster jwt-lab-cluster \
   --service-name service-b --query 'taskArns[0]' --output text --region $AWS_REGION)
 
-ENI_ID=$(aws ecs describe-tasks --cluster jwt-lab-cluster \
+SERVICE_B_IP=$(aws ecs describe-tasks --cluster jwt-lab-cluster \
   --tasks $TASK_ARN \
-  --query 'tasks[0].attachments[0].details[?name==`networkInterfaceId`].value' \
-  --output text --region $AWS_REGION)
-
-SERVICE_B_IP=$(aws ec2 describe-network-interfaces \
-  --network-interface-ids $ENI_ID \
-  --query 'NetworkInterfaces[0].Association.PublicIp' \
+  --query 'tasks[0].containers[0].networkInterfaces[0].privateIpv4Address' \
   --output text --region $AWS_REGION)
 
 echo "Service_B URL: http://$SERVICE_B_IP:5000"
@@ -391,7 +388,7 @@ terraform apply -auto-approve \
   -var="jwt_secret=my-super-secret-key-for-lab"
 ```
 
-ECS will deploy a new Service_B task with the updated environment. Wait for it to stabilise, get the new IP, then re-run Service_C.
+ECS will deploy a new Service_B task with the updated environment. Wait for it to stabilise, get the new IP (i.e. update `SERVICE_B_URL`), then re-run Service_C.
 
 **Option B — Quick test via ECS Console (temporary)**
 
@@ -412,8 +409,9 @@ AUTH SUCCESS: status=200 body={"message": "Hello from Service_B!", "subject": "s
 If you see `NETWORK ERROR: Connection timed out` or `NETWORK ERROR: Connection refused` instead of `AUTH SUCCESS` or `AUTH DENIED`, the issue is network connectivity — not JWT auth. Check:
 
 1. Service_B task is in RUNNING state
-2. The `SERVICE_B_URL` IP is correct (re-run the IP lookup commands above)
+2. The `SERVICE_B_URL` uses Service_B's **private IP** (not the public IP — see note above)
 3. Security groups allow callers to reach Service_B on port 5000
+4. Both tasks are in the same subnet
 
 Auth responses always show `AUTH SUCCESS` or `AUTH DENIED` with an HTTP status code. Network errors always show `NETWORK ERROR` with a connection-level message.
 
@@ -468,7 +466,7 @@ Neither is universally better. VPC Lattice is stronger when you want infrastruct
 
 ## Optional Extension: Token Issuer Service
 
-The baseline lab has a deliberate simplification: every service holds the signing key and mints its own tokens. This is fine for demonstrating the validation pattern, but it means any service can impersonate any other service — there's no central authority controlling identity.
+The baseline lab has a deliberate simplification: every service holds the signing key and mints its own tokens. This is fine for demonstrating the validation pattern, but it means any service can impersonate any other service — there's no central authority controlling identity. **This is NOT production worthy** and would be **Dangerous** to use in any setting outsite this tutorial. 
 
 This section describes how you'd evolve the pattern toward production-realistic token issuance without introducing a real identity provider.
 
