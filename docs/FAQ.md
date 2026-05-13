@@ -28,7 +28,7 @@ Cost. A NAT Gateway costs ~$0.045/hour - more than all other tutorial resources 
 
 ### Can I use a different region?
 
-Yes. Change the `aws_region` variable in both `lab/phase1/variables.tf` and `lab/phase3/variables.tf`, and ensure your AWS CLI is configured for that region. VPC Lattice is available in most commercial regions.
+Yes. Change the `aws_region` variable in both `phase1/variables.tf` and `phase3/variables.tf` within the lab you're running, and ensure your AWS CLI is configured for that region. VPC Lattice is available in most commercial regions.
 
 ### What's the difference between the identity-based policy and the auth policy?
 
@@ -65,7 +65,7 @@ Both must allow for the request to succeed. This is the dual authorization model
 
 | Issue | Cause | Fix |
 |-------|-------|-----|
-| `InvalidParameterException: Image does not exist` | Image not pushed or wrong URI | Verify images exist: `aws ecr describe-images --repository-name lab/caller --region $AWS_REGION` |
+| `InvalidParameterException: Image does not exist` | Image not pushed or wrong URI | Verify images exist: `aws ecr describe-images --repository-name <prefix>/caller --region $AWS_REGION` |
 | Target group shows `UNHEALTHY` | Service_B not responding on port 5000 | Check logs: `aws logs tail /ecs/service-b --since 5m --region $AWS_REGION` |
 | ECS task stuck in `PROVISIONING` | Subnet can't reach internet | Verify route table has `0.0.0.0/0 → IGW` and subnet is associated |
 | `Error: creating VPC Lattice Service Network VPC Association` | VPC already associated | Remove existing association or use a different VPC |
@@ -87,7 +87,7 @@ Both must allow for the request to succeed. This is the dual authorization model
 | Phase 3 destroy fails with dependency error | ECS tasks still running | Wait for tasks to stop, or force-stop: `aws ecs stop-task --cluster lab-cluster --task <task-arn> --region $AWS_REGION` |
 | Phase 1 destroy fails with "resource in use" | Phase 3 not fully destroyed | Re-run Phase 3 destroy first |
 | VPC deletion fails | ENIs still attached | Wait 5 minutes for ECS to release ENIs, then retry |
-| Lost shell variables | Terminal closed | Re-export from Phase 1: `export CALLER_ECR_URL=$(terraform -chdir=lab/phase1 output -raw caller_ecr_repository_url)` |
+| Lost shell variables | Terminal closed | Re-export from Phase 1: `export CALLER_ECR_URL=$(terraform -chdir=phase1 output -raw caller_ecr_repository_url)` |
 
 ---
 

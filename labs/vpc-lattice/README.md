@@ -1,35 +1,22 @@
-# Lab Walkthrough Guide
+# VPC Lattice Service-to-Service Authentication Lab
 
-This guide walks you through deploying, testing, and understanding the VPC Lattice service-to-service authentication tutorial.
+This lab teaches **infrastructure-enforced service-to-service authentication** using VPC Lattice and IAM on AWS. You'll deploy a minimal environment from scratch and observe both successful and blocked inter-service communication — proving that authorization is enforced at the infrastructure level, not in application code.
 
-**Time**: 30-45 minutes | **Cost**: < $0.15 | **Prerequisites**: [PREREQUISITES.md](PREREQUISITES.md)
+**Time**: 30–45 minutes | **Cost**: < $0.15 | **Prerequisites**: [Prerequisites](../../docs/PREREQUISITES.md)
 
-> Make sure you've read the [Important Notes](NOTICE.md) before deploying.
+> Make sure you've read the [Important Notes](../../docs/NOTICE.md) before deploying.
 
 ---
 
-## Environment
+## Prerequisites
 
-This tutorial is written for **AWS CloudShell**. It has the AWS CLI and Docker pre-installed, your credentials are automatically available, and there's nothing to configure before you start.
+Complete the [shared prerequisites](../../docs/PREREQUISITES.md) first (CloudShell setup, Terraform install, plugin cache).
 
-To open CloudShell, click the terminal icon in the top navigation bar of the AWS Console, or go to [console.aws.amazon.com/cloudshell](https://console.aws.amazon.com/cloudshell). Make sure you open it in the same region you plan to deploy to.
+This lab additionally requires VPC Lattice IAM permissions:
 
-Terraform isn't pre-installed in CloudShell, so you'll need to add it. Run this once per CloudShell session:
-
-```bash
-sudo dnf install -y dnf-plugins-core
-sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
-sudo dnf -y install terraform
-```
-
-CloudShell's home directory has limited disk space (1 GB), so redirect the Terraform plugin cache to `/tmp` before running any `terraform init`:
-
-```bash
-export TF_PLUGIN_CACHE_DIR="/tmp/tf-plugin-cache"
-mkdir -p $TF_PLUGIN_CACHE_DIR
-```
-
-> **Using a different environment?** The commands in this guide should work in any bash-compatible shell with the AWS CLI, Docker, and Terraform installed. You'll need to handle credential configuration and any environment differences yourself - but you probably already know that.
+| Service | Permissions |
+|---------|------------|
+| **VPC Lattice** | `vpc-lattice:CreateServiceNetwork`, `vpc-lattice:CreateService`, `vpc-lattice:CreateTargetGroup`, `vpc-lattice:CreateListener`, `vpc-lattice:CreateServiceNetworkVpcAssociation`, `vpc-lattice:PutAuthPolicy`, `vpc-lattice:RegisterTargets`, `vpc-lattice:DeleteServiceNetwork`, `vpc-lattice:DeleteService`, `vpc-lattice:DeleteTargetGroup`, `vpc-lattice:DeleteListener` |
 
 ---
 
@@ -120,7 +107,7 @@ graph LR
 Phase 1 creates the VPC, subnet, IAM roles, ECR repositories, and security groups.
 
 ```bash
-cd lab/phase1
+cd labs/vpc-lattice/phase1
 terraform init
 terraform plan
 terraform apply -auto-approve
@@ -416,17 +403,109 @@ This is the key insight: **the application code is identical, the container imag
 
 ---
 
-### Knowledge check
+### Knowledge Check
 
 You've seen Service_A succeed and Service_C fail. You understand why.
 
 **Challenge: can you update the solution to allow Service_C to connect to Service_B?**
 
-Think about what you'd need to change based on what you've just seen in the Console. There are two things that need to be true for a caller to succeed - you'll need to address both of them.
+Think about what you'd need to change based on what you've just seen in the Console. There are two things that need to be true for a caller to succeed — you'll need to address both of them.
 
-Give it a go using the AWS Console before looking at any hints.
+Give it a go using the AWS Console before looking at the hint below.
 
-> Stuck? A step-by-step console walkthrough is available in [docs/HINT-SERVICE-C.md](HINT-SERVICE-C.md).
+<details>
+<summary><strong>Hint</strong></summary>
+
+Recall the two gates a caller must pass:
+
+1. The caller's IAM role must have `vpc-lattice-svcs:Invoke` permission
+2. The VPC Lattice auth policy on the target service must permit the caller's principal
+
+Service_C currently fails at gate 1. Even if you fix that, it will then fail at gate 2. You need to fix both.
+
+#### Step 1 — Add the identity-based policy to Service_C's role
+
+1. Open the [IAM Console - Roles](https://console.aws.amazon.com/iam/home#/roles) and search for `lab-service-c-task-role`
+2. Click on the role, then click the **Permissions** tab
+3. Click **Add permissions** → **Create inline policy**
+4. Switch to the **JSON** editor and paste:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "vpc-lattice-svcs:Invoke",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+5. Click **Next**, name the policy (e.g. `lattice-invoke`), then click **Create policy**
+
+Service_C can now attempt VPC Lattice calls — but it will still get a 403 because gate 2 is still blocking it.
+
+#### Step 2 — Update the Lattice auth policy to permit Service_C
+
+1. Open the [VPC Console](https://console.aws.amazon.com/vpcconsole/home) and click **Lattice services** in the left nav
+2. Click on `lab-service-b`, then click the **Access** tab
+3. Click **Edit** on the auth policy
+4. Add Service_C's role ARN as a second principal:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": [
+          "arn:aws:iam::<account_id>:role/lab-service-a-task-role",
+          "arn:aws:iam::<account_id>:role/lab-service-c-task-role"
+        ]
+      },
+      "Action": "vpc-lattice-svcs:Invoke",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+Replace `<account_id>` with your AWS account ID (visible in the top-right of the console, or via `aws sts get-caller-identity --query Account --output text`).
+
+5. Click **Save**
+
+#### Step 3 — Re-run Service_C and verify
+
+Run Service_C again using the same `aws ecs run-task` command from the testing section, then check the logs:
+
+```bash
+aws logs tail /ecs/service-c --since 5m --region $AWS_REGION
+```
+
+**Expected output:**
+
+```
+Response status: 200
+Response body: {"message": "Hello from Service_B!", "timestamp": "..."}
+```
+
+#### What you've demonstrated
+
+By making two changes — one to IAM, one to the Lattice auth policy — you've granted Service_C access to Service_B. Neither change touched any application code. Service_B's `app.py` is completely unchanged.
+
+This is the pattern in practice: access control is managed entirely through IAM and Lattice policies, not through application logic.
+
+#### Tidy up
+
+To restore the original lab state (Service_C denied), reverse both changes:
+
+1. In IAM, delete the inline policy you added to `lab-service-c-task-role`
+2. In VPC Lattice, edit the auth policy back to only permit `lab-service-a-task-role`
+
+</details>
 
 ---
 
@@ -471,7 +550,7 @@ Destroy all resources promptly to avoid ongoing charges.
 ### Step 1: Destroy Phase 3
 
 ```bash
-cd lab/phase3
+cd labs/vpc-lattice/phase3
 
 terraform destroy -auto-approve \
   -var="vpc_id=$(terraform -chdir=../phase1 output -raw vpc_id)" \

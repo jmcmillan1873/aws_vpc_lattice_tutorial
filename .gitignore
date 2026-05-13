@@ -38,6 +38,9 @@ terraform.rc
 # Python
 # =============================================================================
 
+# Hypothesis test database (generated during property-based testing)
+.hypothesis/
+
 # Byte-compiled / optimised / DLL files
 __pycache__/
 *.py[cod]

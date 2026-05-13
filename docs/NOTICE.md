@@ -40,7 +40,7 @@ The following design choices are made for tutorial clarity and would need to cha
 
 - Deploy in a **sandbox AWS account** or a region you don't use for production workloads
 - Use a **dedicated IAM user** rather than your root account or production credentials
-- **Clean up promptly** after completing the tutorial (see the Cleanup section in the [Walkthrough](WALKTHROUGH.md))
+- **Clean up promptly** after completing the tutorial (see the Cleanup section in each lab's README)
 
 ## Go Explore
 
