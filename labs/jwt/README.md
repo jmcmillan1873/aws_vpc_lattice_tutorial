@@ -2,7 +2,7 @@
 
 This lab teaches application-layer service-to-service authentication using JWT (JSON Web Tokens). Three ECS Fargate services demonstrate both successful and blocked inter-service communication — identical observable outcomes to the [VPC Lattice lab](../vpc-lattice/), but with auth enforced by the application rather than infrastructure.
 
-**Time**: 30–45 minutes | **Cost**: < $0.10 | **Prerequisites**: see below
+**Time**: 30–45 minutes | **Cost**: < $0.10 | **Prerequisites**: [Prerequisites](../../docs/PREREQUISITES.md)
 
 > ⚠️ **Lab simplification**: All services share the same HMAC signing key via environment variable. This allows callers to mint their own tokens — a pattern that would be unacceptable in production. See the [Comparison](#comparison-vpc-lattice-vs-jwt-auth) section for details.
 
@@ -34,14 +34,13 @@ This demonstrates the **authentication vs authorization distinction**: Service_C
 
 ## Prerequisites
 
-| Tool | Minimum Version | Purpose |
-|------|----------------|---------|
-| [Terraform](https://developer.hashicorp.com/terraform/downloads) | >= 1.14.0 | Infrastructure deployment |
-| [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) | v2 | AWS operations, ECR login, ECS run-task |
-| [Docker](https://docs.docker.com/get-docker/) | Latest stable | Build and push container images |
-| [Python](https://www.python.org/downloads/) | 3.9+ | Running property-based tests locally (optional) |
+Complete the [shared prerequisites](../../docs/PREREQUISITES.md) first (CloudShell setup, Terraform install, plugin cache).
 
-You also need an AWS account with permissions for VPC, ECS, IAM, ECR, and CloudWatch Logs. For a learning environment, `AdministratorAccess` avoids permission issues.
+This lab has no additional IAM requirements beyond the common set. Optionally, if you want to run the property-based tests locally:
+
+| Tool | Version | Purpose |
+|------|---------|---------|
+| [Python](https://www.python.org/downloads/) | 3.9+ | Running property-based tests locally |
 
 ---
 
